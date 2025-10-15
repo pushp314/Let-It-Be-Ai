@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { env } from "@/lib/env";
+
 
 // FIX: Define SearchParamProps locally to permanently resolve the "Cannot find name" error.
 
@@ -39,6 +41,11 @@ const Profile = ({ searchParams }: SearchParamProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!env.MONGODB_URI) {
+      toast({ title: "Error", description: "MONGODB_URI is not configured. Please set it in your environment variables." });
+      redirect("/");
+      return;
+    }
     // FIX: Use a typed user object to resolve property 'id' does not exist error.
     if (status === "authenticated" && session?.user) {
       const sessionUser = session.user as { id: string }; // Cast the user
@@ -59,7 +66,7 @@ const Profile = ({ searchParams }: SearchParamProps) => {
     } else if (status === "unauthenticated") {
       redirect("/sign-in");
     }
-  }, [session, status, page]);
+  }, [session, status, page, toast]);
 
   const handleDelete = async () => {
     if (!user) return;

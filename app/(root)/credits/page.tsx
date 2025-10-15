@@ -2,43 +2,54 @@
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { useEffect, useState } from 'react'; // FIX: Import useEffect and useState
+import { useEffect, useState } from 'react';
+import { useToast } from "@/components/ui/use-toast"; // Import useToast
 
 import Header from "@/components/shared/Header";
 import { Button } from "@/components/ui/button";
 import { plans } from "@/constants";
 import { getUserById } from "@/lib/actions/user.actions";
 import Checkout from "@/components/shared/Checkout";
-import { IUser } from "@/lib/database/models/user.model"; // FIX: Import the IUser type
+import { IUser } from "@/lib/database/models/user.model";
+import { env } from "@/lib/env"; // Import env
 
-// FIX: Remove 'async' and convert to a proper client component
 const Credits = () => {
   const { data: session, status } = useSession();
-  // FIX: Add state to hold the user and loading status
   const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast(); // Initialize useToast
 
-  // FIX: Redirect or fetch user data in a useEffect hook based on session status
   useEffect(() => {
-    if (status === 'loading') return; // Wait until session is loaded
+    // Add the MONGODB_URI check
+    if (!env.MONGODB_URI) {
+      toast({ title: "Error", description: "MONGODB_URI is not configured. Please set it in your environment variables." });
+      redirect("/");
+      return;
+    }
+
+    if (status === 'loading') return;
     if (!session) {
       redirect("/sign-in");
+      return; // Add return to stop execution
     }
 
     const fetchUser = async () => {
       if (session?.user) {
-        // FIX: Cast the session user to include your custom 'id' property
         const sessionUser = session.user as { id: string };
-        const fetchedUser = await getUserById(sessionUser.id);
-        setUser(fetchedUser);
+        try {
+          const fetchedUser = await getUserById(sessionUser.id);
+          setUser(fetchedUser);
+        } catch (error) {
+            console.error("Failed to fetch user:", error);
+            toast({ title: "Error", description: "Failed to fetch user data. Please try again later.", variant: "destructive" });
+        }
       }
       setLoading(false);
     };
 
     fetchUser();
-  }, [session, status]);
+  }, [session, status, toast]); // Add toast to dependency array
 
-  // FIX: Show a loading state while fetching user data
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -96,7 +107,6 @@ const Credits = () => {
                   plan={plan.name}
                   amount={plan.price}
                   credits={plan.credits}
-                  // FIX: Use the user ID from the state variable
                   buyerId={user._id}
                 />
               )}
