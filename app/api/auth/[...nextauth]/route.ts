@@ -12,7 +12,7 @@ const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session }) {
+    async session({ session }: { session: any }) {
       try {
         await connectToDatabase();
         const sessionUser = await User.findOne({ email: session.user.email });
@@ -25,7 +25,7 @@ const authOptions = {
         return session;
       }
     },
-    async signIn({ account, profile }) {
+    async signIn({ account, profile }: { account: any; profile: any }) {
       if (account?.provider === 'google') {
         try {
           await connectToDatabase();
