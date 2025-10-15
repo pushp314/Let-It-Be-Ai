@@ -18,12 +18,6 @@ import {
 import { Button } from "@/components/ui/button"
 import {
   Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { aspectRatioOptions, creditFee, defaultValues, transformationTypes } from "@/constants"
@@ -103,11 +97,10 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
 
-    // FIX: Add guards to ensure image and publicId exist before proceeding.
-    if (!image || !image.publicId) {
+    if (!image || !image.publicId || !image.width || !image.height || !image.secureURL) {
       toast({
         title: "Error",
-        description: "Image data is missing. Please upload an image.",
+        description: "Image data is incomplete. Please upload an image again.",
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -115,20 +108,20 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
     }
 
     const transformationUrl = getCldImageUrl({
-      width: image?.width,
-      height: image?.height,
-      src: image.publicId, // Use guarded image.publicId
+      width: image.width,
+      height: image.height,
+      src: image.publicId,
       ...transformationConfig,
     });
 
     const imageData = {
       title: values.title,
-      publicId: image.publicId, // Use guarded image.publicId
+      publicId: image.publicId,
       transformationType: type,
-      width: image.width as number,
-      height: image.height as number,
+      width: image.width,
+      height: image.height,
       config: transformationConfig,
-      secureURL: image.secureURL as string,
+      secureURL: image.secureURL,
       transformationURL: transformationUrl,
       aspectRatio: values.aspectRatio,
       prompt: values.prompt,
@@ -147,58 +140,38 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
           form.reset();
           setImage(data);
           router.push(`/transformations/${newImage._id}`);
-          toast({
-            title: "Image saved successfully!",
-            description: "Your image has been saved to your profile.",
-            duration: 5000,
-            className: "success-toast",
-          });
+          toast({ title: "Success", description: "Image saved successfully!" });
         }
       } catch (error) {
-        console.log(error);
-        toast({
-          title: "Error saving image!",
-          description: "There was an error while saving your image. Please try again later.",
-          duration: 5000,
-          className: "error-toast",
-        });
+        console.error(error);
+        toast({ title: "Error", description: "Failed to save image. Please try again.", variant: "destructive" });
       }
     }
 
-    // FIX: Add a guard to ensure data exists for the Update action.
     if (action === 'Update') {
-      if (!data) {
-        toast({ title: "Error", description: "Original image data is missing for update.", variant: "destructive" });
+      if (!data || !data._id) {
+        toast({ title: "Error", description: "Original image data is missing. Please try again.", variant: "destructive" });
         setIsSubmitting(false);
         return;
       }
+
       try {
         const updatedImage = await updateImage({
           image: {
             ...imageData,
-            _id: data._id, // Use guarded data._id
+            _id: data._id,
           },
           userId,
-          path: `/transformations/${data._id}`, // Use guarded data._id
+          path: `/transformations/${data._id}`,
         });
 
         if (updatedImage) {
           router.push(`/transformations/${updatedImage._id}`);
-          toast({
-            title: "Image updated successfully!",
-            description: "Your image has been updated successfully.",
-            duration: 5000,
-            className: "success-toast",
-          });
+          toast({ title: "Success", description: "Image updated successfully!" });
         }
       } catch (error) {
-        console.log(error);
-        toast({
-          title: "Error updating image!",
-          description: "There was an error while updating your image. Please try again later.",
-          duration: 5000,
-          className: "error-toast",
-        });
+        console.error(error);
+        toast({ title: "Error", description: "Failed to update image. Please try again.", variant: "destructive" });
       }
     }
 
@@ -246,25 +219,15 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
     startTransition(async () => {
       try {
         await updateCredits(userId, creditFee);
-        toast({
-          title: "Transformation successful!",
-          description: "Your image has been transformed successfully.",
-          duration: 5000,
-          className: "success-toast",
-        });
+        toast({ title: "Success", description: "Transformation applied successfully!" });
       } catch (error) {
-        console.error("Error updating credits:", error);
-        toast({
-          title: "Transformation failed!",
-          description: "Something went wrong while applying the transformation. Please try again.",
-          duration: 5000,
-          className: "error-toast",
-        });
+        console.error(error);
+        toast({ title: "Error", description: "Failed to apply transformation. Please try again.", variant: "destructive" });
       } finally {
         setIsTransforming(false);
       }
     });
-  };
+  }
 
   useEffect(() => {
     if(image && (type === 'restore' || type === 'removeBackground')) {
