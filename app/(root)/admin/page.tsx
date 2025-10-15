@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { getAllUsers } from '../../../lib/actions/user.actions';
 import { getAllTransactions } from '../../../lib/actions/transaction.action';
@@ -7,8 +6,7 @@ import TransactionList from '../../../components/shared/TransactionList';
 
 const AdminPage = async () => {
   const users = await getAllUsers();
-  const transactionData = await getAllTransactions({});
-  const transactions = transactionData ? transactionData.data : [];
+  const transactions = await getAllTransactions();
 
   return (
     <div className="container mx-auto p-4">

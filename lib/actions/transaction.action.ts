@@ -1,4 +1,3 @@
-
 "use server"
 import Razorpay from "razorpay";
 import { redirect } from 'next/navigation'
@@ -6,7 +5,7 @@ import { handleError } from '../utils'
 import { connectToDatabase } from '../database/mongoose'
 import Transaction from '../database/models/transaction.model'
 import { updateCredits } from './user.actions'
-
+import User from '../database/models/user.model'
 
 export async function checkoutCredits(transaction: any) {
   const razorpay = new Razorpay({
@@ -15,7 +14,7 @@ export async function checkoutCredits(transaction: any) {
   });
 
   const options = {
-    amount: transaction.amount * 100, 
+    amount: transaction.amount * 100,
     currency: "INR",
     receipt: Math.random().toString(36).substring(7),
   };
@@ -49,7 +48,11 @@ export async function getAllTransactions() {
   try {
     await connectToDatabase();
 
-    const transactions = await Transaction.find();
+    const transactions = await Transaction.find().populate({
+        path: 'buyer',
+        model: User,
+        select: 'username'
+    });
 
     return JSON.parse(JSON.stringify(transactions));
   } catch (error) {
