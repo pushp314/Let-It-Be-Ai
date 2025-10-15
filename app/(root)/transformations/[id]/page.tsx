@@ -1,4 +1,5 @@
-import { auth } from "../../../auth";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/shared/Header";
@@ -13,7 +14,7 @@ type SearchParamProps = {
 };
 
 const ImageDetails = async ({ params: { id } }: SearchParamProps) => {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
 
   const image = await getImageById(id);
