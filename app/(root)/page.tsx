@@ -4,7 +4,9 @@ import { getAllImages } from "@/lib/actions/image.actions"
 import Image from "next/image"
 import Link from "next/link"
 
-const Home = async ({ searchParams }: SearchParamProps) => {
+// FIX: Removed the explicit SearchParamProps type to resolve the error.
+// Next.js automatically provides the searchParams prop to page components.
+const Home = async ({ searchParams }: any) => {
   const page = Number(searchParams?.page) || 1;
   const searchQuery = (searchParams?.query as string) || '';
 

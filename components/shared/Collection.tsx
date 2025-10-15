@@ -19,6 +19,14 @@ import { Button } from "../ui/button";
 
 import { Search } from "./Search";
 
+// FIX: Define TransformationTypeKey locally to resolve TypeScript errors.
+type TransformationTypeKey =
+  | "restore"
+  | "fill"
+  | "remove"
+  | "recolor"
+  | "removeBackground";
+
 export const Collection = ({
   hasSearch = false,
   images,
@@ -113,11 +121,7 @@ const Card = ({ image }: { image: IImage }) => {
             {image.title}
           </p>
           <Image
-            src={`/assets/icons/${
-              transformationTypes[
-                image.transformationType as TransformationTypeKey
-              ].icon
-            }`}
+            src={`/assets/icons/${transformationTypes[image.transformationType as TransformationTypeKey].icon}`}
             alt={image.title}
             width={24}
             height={24}

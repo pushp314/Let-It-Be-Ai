@@ -37,13 +37,26 @@ export async function getUserById(userId: string) {
 
 
 // GET ALL USERS
-export async function getAllUsers() {
+export async function getAllUsers({ page = 1, searchQuery = '' }: { page?: number, searchQuery?: string }) {
   try {
     await connectToDatabase();
 
-    const users = await User.find({});
+    const skipAmount = (page - 1) * 20;
+    const query = searchQuery ? { 
+      $or: [
+        { firstName: { $regex: new RegExp(searchQuery, 'i') } },
+        { lastName: { $regex: new RegExp(searchQuery, 'i') } },
+        { email: { $regex: new RegExp(searchQuery, 'i') } },
+      ]
+    } : {};
 
-    return JSON.parse(JSON.stringify(users));
+    const users = await User.find(query).skip(skipAmount).limit(20);
+    const totalUsers = await User.countDocuments(query);
+
+    return {
+      data: JSON.parse(JSON.stringify(users)),
+      totalPages: Math.ceil(totalUsers / 20),
+    };
   } catch (error) {
     handleError(error);
   }

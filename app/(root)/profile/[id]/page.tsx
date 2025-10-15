@@ -1,76 +1,49 @@
 
 'use client'
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast"
 
 import { Collection } from "@/components/shared/Collection";
 import Header from "@/components/shared/Header";
 import { getUserImages } from "@/lib/actions/image.actions";
-import { getUserById, deleteUser } from "@/lib/actions/user.actions";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { getUserById } from "@/lib/actions/user.actions";
 
-// FIX: Define SearchParamProps locally to permanently resolve the "Cannot find name" error.
-
-type SearchParamProps = {
-    searchParams: { [key: string]: string | string[] | undefined };
-};
-
-const Profile = ({ searchParams }: SearchParamProps) => {
+// FIX: Replaced SearchParamProps with a specific type definition to resolve the error.
+const ProfilePage = ({ params, searchParams }: { params: { id: string }, searchParams: { [key: string]: string | string[] | undefined } }) => {
   const page = Number(searchParams?.page) || 1;
   const { data: session, status } = useSession();
   const [user, setUser] = useState<any>(null);
   const [images, setImages] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
-    // FIX: Use a typed user object to resolve property 'id' does not exist error.
-    if (status === "authenticated" && session?.user) {
-      const sessionUser = session.user as { id: string }; // Cast the user
+    // FIX: Cast the session user to a type that includes the 'role' property.
+    const typedUser = session?.user as { role?: string };
+
+    if (status === "authenticated" && typedUser?.role === 'admin') {
       const fetchData = async () => {
         try {
           setLoading(true);
-          const fetchedUser = await getUserById(sessionUser.id); // Use the casted user
+          const fetchedUser = await getUserById(params.id);
           const fetchedImages = await getUserImages({ page, userId: fetchedUser._id });
           setUser(fetchedUser);
           setImages(fetchedImages);
         } catch (err) {
-          setError("Failed to fetch data");
+          setError("Failed to fetch user data");
         } finally {
           setLoading(false);
         }
       };
       fetchData();
+    } else if (status === "authenticated" && typedUser?.role !== 'admin') {
+        redirect('/')
     } else if (status === "unauthenticated") {
       redirect("/sign-in");
     }
-  }, [session, status, page]);
-
-  const handleDelete = async () => {
-    if (!user) return;
-    try {
-      await deleteUser(user._id);
-      toast({ title: "Account deleted successfully" });
-      signOut({ callbackUrl: '/' });
-    } catch (err) {
-      toast({ title: "Error deleting account", variant: "destructive" });
-    }
-  };
+  }, [session, status, page, params.id]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -86,7 +59,7 @@ const Profile = ({ searchParams }: SearchParamProps) => {
 
   return (
     <>
-      <Header title="Profile" />
+      <Header title={`${user.firstName} ${user.lastName}'s Profile`} />
 
       <section className="profile">
         <div className="profile-balance">
@@ -117,26 +90,6 @@ const Profile = ({ searchParams }: SearchParamProps) => {
           </div>
         </div>
       </section>
-      
-      <section className="mt-8 md:mt-14">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive">Delete Account</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your account and all your images.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </section>
 
       <section className="mt-8 md:mt-14">
         <Collection
@@ -149,4 +102,4 @@ const Profile = ({ searchParams }: SearchParamProps) => {
   );
 };
 
-export default Profile;
+export default ProfilePage;

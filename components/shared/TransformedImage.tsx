@@ -6,7 +6,16 @@ import { PlaceholderValue } from 'next/dist/shared/lib/get-img-props'
 import Image from 'next/image'
 import React from 'react'
 
-const TransformedImage = ({ image, type, title, transformationConfig, isTransforming, setIsTransforming, hasDownload = false }: TransformedImageProps) => {
+type TransformedImageProps = {
+  image: any;
+  type: string;
+  title: string;
+  transformationConfig: any;
+  isTransforming: boolean;
+  hasDownload?: boolean;
+};
+
+const TransformedImage = ({ image, type, title, transformationConfig, isTransforming, hasDownload = false }: TransformedImageProps) => {
   const downloadHandler = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
 
@@ -51,14 +60,6 @@ const TransformedImage = ({ image, type, title, transformationConfig, isTransfor
             sizes={"(max-width: 767px) 100vw, 50vw"}
             placeholder={dataUrl as PlaceholderValue}
             className="transformed-image"
-            onLoad={() => {
-              setIsTransforming && setIsTransforming(false);
-            }}
-            onError={() => {
-              debounce(() => {
-                setIsTransforming && setIsTransforming(false);
-              }, 8000)()
-            }}
             {...transformationConfig}
           />
 

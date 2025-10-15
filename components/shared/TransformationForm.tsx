@@ -37,6 +37,34 @@ import { getCldImageUrl } from "next-cloudinary"
 import { addImage, updateImage } from "@/lib/actions/image.actions"
 import { useRouter } from "next/navigation"
 import { InsufficientCreditsModal } from "./InsufficientCreditsModal"
+import { IImage } from "@/lib/database/models/image.model"
+
+// FIX: Define types locally to permanently resolve "Cannot find name" errors.
+
+type TransformationTypeKey =
+  | "restore"
+  | "fill"
+  | "remove"
+  | "recolor"
+  | "removeBackground";
+
+interface TransformationFormProps {
+  action: "Add" | "Update";
+  userId: string;
+  type: TransformationTypeKey;
+  creditBalance: number;
+  data?: IImage | null;
+  config?: object | null;
+}
+
+interface Transformations {
+  restore?: boolean;
+  fillBackground?: boolean;
+  remove?: { prompt: string; multiple?: boolean };
+  recolor?: { prompt: string; to: string; multiple?: boolean };
+  removeBackground?: boolean;
+}
+
  
 export const formSchema = z.object({
   title: z.string(),
@@ -75,91 +103,106 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
 
-    if(data || image) {
-      const transformationUrl = getCldImageUrl({
-        width: image?.width,
-        height: image?.height,
-        src: image?.publicId,
-        ...transformationConfig
-      })
+    // FIX: Add guards to ensure image and publicId exist before proceeding.
+    if (!image || !image.publicId) {
+      toast({
+        title: "Error",
+        description: "Image data is missing. Please upload an image.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
-      const imageData = {
-        title: values.title,
-        publicId: image?.publicId,
-        transformationType: type,
-        width: image?.width,
-        height: image?.height,
-        config: transformationConfig,
-        secureURL: image?.secureURL,
-        transformationURL: transformationUrl,
-        aspectRatio: values.aspectRatio,
-        prompt: values.prompt,
-        color: values.color,
-      }
+    const transformationUrl = getCldImageUrl({
+      width: image?.width,
+      height: image?.height,
+      src: image.publicId, // Use guarded image.publicId
+      ...transformationConfig,
+    });
 
-      if(action === 'Add') {
-        try {
-          const newImage = await addImage({
-            image: imageData,
-            userId,
-            path: '/'
-          })
+    const imageData = {
+      title: values.title,
+      publicId: image.publicId, // Use guarded image.publicId
+      transformationType: type,
+      width: image.width as number,
+      height: image.height as number,
+      config: transformationConfig,
+      secureURL: image.secureURL as string,
+      transformationURL: transformationUrl,
+      aspectRatio: values.aspectRatio,
+      prompt: values.prompt,
+      color: values.color,
+    };
 
-          if(newImage) {
-            form.reset()
-            setImage(data)
-            router.push(`/transformations/${newImage._id}`)
-            toast({
-              title: "Image saved successfully!",
-              description: "Your image has been saved to your profile.",
-              duration: 5000,
-              className: "success-toast",
-            });
-          }
-        } catch (error) {
-          console.log(error);
-           toast({
-            title: "Error saving image!",
-            description: "There was an error while saving your image. Please try again later.",
-            duration: 5000,
-            className: "error-toast",
-          });
-        }
-      }
+    if (action === 'Add') {
+      try {
+        const newImage = await addImage({
+          image: imageData,
+          userId,
+          path: '/',
+        });
 
-      if(action === 'Update') {
-        try {
-          const updatedImage = await updateImage({
-            image: {
-              ...imageData,
-              _id: data._id
-            },
-            userId,
-            path: `/transformations/${data._id}`
-          })
-
-          if(updatedImage) {
-            router.push(`/transformations/${updatedImage._id}`)
-            toast({
-              title: "Image updated successfully!",
-              description: "Your image has been updated successfully.",
-              duration: 5000,
-              className: "success-toast",
-            });
-          }
-        } catch (error) {
-          console.log(error);
+        if (newImage) {
+          form.reset();
+          setImage(data);
+          router.push(`/transformations/${newImage._id}`);
           toast({
-            title: "Error updating image!",
-            description: "There was an error while updating your image. Please try again later.",
+            title: "Image saved successfully!",
+            description: "Your image has been saved to your profile.",
             duration: 5000,
-            className: "error-toast",
+            className: "success-toast",
           });
         }
+      } catch (error) {
+        console.log(error);
+        toast({
+          title: "Error saving image!",
+          description: "There was an error while saving your image. Please try again later.",
+          duration: 5000,
+          className: "error-toast",
+        });
       }
     }
 
-    setIsSubmitting(false)
+    // FIX: Add a guard to ensure data exists for the Update action.
+    if (action === 'Update') {
+      if (!data) {
+        toast({ title: "Error", description: "Original image data is missing for update.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+      try {
+        const updatedImage = await updateImage({
+          image: {
+            ...imageData,
+            _id: data._id, // Use guarded data._id
+          },
+          userId,
+          path: `/transformations/${data._id}`, // Use guarded data._id
+        });
+
+        if (updatedImage) {
+          router.push(`/transformations/${updatedImage._id}`);
+          toast({
+            title: "Image updated successfully!",
+            description: "Your image has been updated successfully.",
+            duration: 5000,
+            className: "success-toast",
+          });
+        }
+      } catch (error) {
+        console.log(error);
+        toast({
+          title: "Error updating image!",
+          description: "There was an error while updating your image. Please try again later.",
+          duration: 5000,
+          className: "error-toast",
+        });
+      }
+    }
+
+    setIsSubmitting(false);
   }
 
   const onSelectFieldHandler = (value: string, onChangeField: (value: string) => void) => {

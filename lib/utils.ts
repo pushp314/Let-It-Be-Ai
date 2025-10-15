@@ -6,6 +6,19 @@ import { twMerge } from "tailwind-merge";
 
 import { aspectRatioOptions } from "@/constants";
 
+// FIX: Define custom types locally to permanently resolve "Cannot find name" errors.
+
+type FormUrlQueryParams = {
+  searchParams: string;
+  key: string;
+  value: string | number | null;
+};
+
+type RemoveUrlQueryParams = {
+  searchParams: string;
+  keysToRemove: string[];
+};
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

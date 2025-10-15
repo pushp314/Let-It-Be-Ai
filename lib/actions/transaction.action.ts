@@ -52,13 +52,25 @@ export async function createTransaction(transaction: CreateTransactionParams) {
 }
 
 
-export async function getAllTransactions() {
+export async function getAllTransactions({ page = 1, searchQuery = '' }: { page?: number, searchQuery?: string }) {
     try {
         await connectToDatabase();
 
-        const transactions = await Transaction.find({});
+        const skipAmount = (page - 1) * 20;
+        const query = searchQuery ? { 
+          $or: [
+            { razorpayId: { $regex: new RegExp(searchQuery, 'i') } },
+            { plan: { $regex: new RegExp(searchQuery, 'i') } },
+          ]
+        } : {};
 
-        return JSON.parse(JSON.stringify(transactions));
+        const transactions = await Transaction.find(query).skip(skipAmount).limit(20);
+        const totalTransactions = await Transaction.countDocuments(query);
+
+        return {
+            data: JSON.parse(JSON.stringify(transactions)),
+            totalPages: Math.ceil(totalTransactions / 20),
+        };
     } catch (error) {
         handleError(error)
     }

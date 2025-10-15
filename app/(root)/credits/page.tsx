@@ -2,19 +2,50 @@
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { useEffect, useState } from 'react'; // FIX: Import useEffect and useState
 
 import Header from "@/components/shared/Header";
 import { Button } from "@/components/ui/button";
 import { plans } from "@/constants";
 import { getUserById } from "@/lib/actions/user.actions";
 import Checkout from "@/components/shared/Checkout";
+import { IUser } from "@/lib/database/models/user.model"; // FIX: Import the IUser type
 
-const Credits = async () => {
-  const { data: session } = useSession();
+// FIX: Remove 'async' and convert to a proper client component
+const Credits = () => {
+  const { data: session, status } = useSession();
+  // FIX: Add state to hold the user and loading status
+  const [user, setUser] = useState<IUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!session) redirect("/sign-in");
+  // FIX: Redirect or fetch user data in a useEffect hook based on session status
+  useEffect(() => {
+    if (status === 'loading') return; // Wait until session is loaded
+    if (!session) {
+      redirect("/sign-in");
+    }
 
-  const user = await getUserById(session.user.id);
+    const fetchUser = async () => {
+      if (session?.user) {
+        // FIX: Cast the session user to include your custom 'id' property
+        const sessionUser = session.user as { id: string };
+        const fetchedUser = await getUserById(sessionUser.id);
+        setUser(fetchedUser);
+      }
+      setLoading(false);
+    };
+
+    fetchUser();
+  }, [session, status]);
+
+  // FIX: Show a loading state while fetching user data
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <div>User not found.</div>; 
+  }
 
   return (
     <>
@@ -65,6 +96,7 @@ const Credits = async () => {
                   plan={plan.name}
                   amount={plan.price}
                   credits={plan.credits}
+                  // FIX: Use the user ID from the state variable
                   buyerId={user._id}
                 />
               )}

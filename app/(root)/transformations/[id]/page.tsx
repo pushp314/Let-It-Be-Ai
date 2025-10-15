@@ -1,7 +1,6 @@
-import { auth } from "@clerk/nextjs";
+import { auth } from "next-auth/next";
 import Image from "next/image";
 import Link from "next/link";
-
 import Header from "@/components/shared/Header";
 import TransformedImage from "@/components/shared/TransformedImage";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,13 @@ import { getImageById } from "@/lib/actions/image.actions";
 import { getImageSize } from "@/lib/utils";
 import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
 
+type SearchParamProps = {
+  params: { id: string };
+};
+
 const ImageDetails = async ({ params: { id } }: SearchParamProps) => {
-  const { userId } = auth();
+  const session = await auth();
+  const userId = session?.user?.id;
 
   const image = await getImageById(id);
 
@@ -83,7 +87,7 @@ const ImageDetails = async ({ params: { id } }: SearchParamProps) => {
           />
         </div>
 
-        {userId === image.author.clerkId && (
+        {userId === image.author._id.toString() && (
           <div className="mt-4 space-y-4">
             <Button asChild type="button" className="submit-button capitalize">
               <Link href={`/transformations/${image._id}/update`}>
