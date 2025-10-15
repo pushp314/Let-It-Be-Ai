@@ -1,4 +1,19 @@
-import { Schema, model, models } from "mongoose";
+
+import { Schema, model, models, Document } from "mongoose";
+
+export interface IUser extends Document {
+    _id: string;
+    googleId: string;
+    email: string;
+    username: string;
+    photo: string;
+    firstName?: string;
+    lastName?: string;
+    planId: number;
+    creditBalance: number;
+    role: string;
+    lastLogin: Date;
+}
 
 const UserSchema = new Schema({
   googleId: {
@@ -34,8 +49,16 @@ const UserSchema = new Schema({
     type: Number,
     default: 10,
   },
+  role: {
+    type: String,
+    default: 'user',
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-const User = models?.User || model("User", UserSchema);
+const User = models?.User || model<IUser>("User", UserSchema);
 
 export default User;

@@ -1,8 +1,11 @@
+
 "use client"
  
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { useToast } from "@/components/ui/use-toast"
+
 
 import {
   Select,
@@ -52,6 +55,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
   const [transformationConfig, setTransformationConfig] = useState(config)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+  const { toast } = useToast()
 
   const initialValues = data && action === 'Update' ? {
     title: data?.title,
@@ -105,9 +109,21 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
             form.reset()
             setImage(data)
             router.push(`/transformations/${newImage._id}`)
+            toast({
+              title: "Image saved successfully!",
+              description: "Your image has been saved to your profile.",
+              duration: 5000,
+              className: "success-toast",
+            });
           }
         } catch (error) {
           console.log(error);
+           toast({
+            title: "Error saving image!",
+            description: "There was an error while saving your image. Please try again later.",
+            duration: 5000,
+            className: "error-toast",
+          });
         }
       }
 
@@ -124,9 +140,21 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
 
           if(updatedImage) {
             router.push(`/transformations/${updatedImage._id}`)
+            toast({
+              title: "Image updated successfully!",
+              description: "Your image has been updated successfully.",
+              duration: 5000,
+              className: "success-toast",
+            });
           }
         } catch (error) {
           console.log(error);
+          toast({
+            title: "Error updating image!",
+            description: "There was an error while updating your image. Please try again later.",
+            duration: 5000,
+            className: "error-toast",
+          });
         }
       }
     }
@@ -174,6 +202,12 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
 
     startTransition(async () => {
       await updateCredits(userId, creditFee)
+       toast({
+        title: "Transformation successful!",
+        description: "Your image has been transformed successfully.",
+        duration: 5000,
+        className: "success-toast",
+      });
     })
   }
 

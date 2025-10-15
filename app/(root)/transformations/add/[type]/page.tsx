@@ -1,18 +1,17 @@
+
+'use client'
 import Header from '@/components/shared/Header'
 import TransformationForm from '@/components/shared/TransformationForm';
 import { transformationTypes } from '@/constants'
-import { getUserById } from '@/lib/actions/user.actions';
-import { auth } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import React from 'react'
 
-const AddTransformationTypePage = async ({ params: { type } }: SearchParamProps) => {
-  const { userId } = auth();
+const AddTransformationTypePage = ({ params: { type } }: SearchParamProps) => {
+  const { data: session } = useSession();
   const transformation = transformationTypes[type];
 
-  if (!userId) redirect('/sign-in')
-
-  const user = await getUserById(userId);
+  if (!session) redirect('/sign-in')
 
   return (
     <>
@@ -24,13 +23,11 @@ const AddTransformationTypePage = async ({ params: { type } }: SearchParamProps)
       <section className='mt-10'>
         <TransformationForm
           action='Add'
-          userId={user._id}
+          userId={session.user.id}
           type= { transformation.type as TransformationTypeKey }
-          creditBalance={user.creditBalance}
+          creditBalance={session.user.creditBalance}
         />
       </section>
-
-
     </>
 
   )

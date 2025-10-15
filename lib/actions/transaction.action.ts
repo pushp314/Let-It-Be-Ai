@@ -1,3 +1,4 @@
+
 "use server";
 
 import { redirect } from 'next/navigation';
@@ -6,11 +7,12 @@ import { handleError } from '../utils';
 import { connectToDatabase } from '../database/mongoose';
 import Transaction from '../database/models/transaction.model';
 import { updateCredits } from './user.actions';
+import { env } from '@/lib/env';
 
 export async function checkoutCredits(transaction: any) {
   const instance = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID!,
-    key_secret: process.env.RAZORPAY_KEY_SECRET!,
+    key_id: env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+    key_secret: env.RAZORPAY_KEY_SECRET,
   });
 
   const amount = Number(transaction.amount) * 100;
@@ -47,4 +49,17 @@ export async function createTransaction(transaction: CreateTransactionParams) {
   } catch (error) {
     handleError(error)
   }
+}
+
+
+export async function getAllTransactions() {
+    try {
+        await connectToDatabase();
+
+        const transactions = await Transaction.find({});
+
+        return JSON.parse(JSON.stringify(transactions));
+    } catch (error) {
+        handleError(error)
+    }
 }

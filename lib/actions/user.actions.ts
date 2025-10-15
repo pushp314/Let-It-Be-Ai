@@ -1,3 +1,4 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -29,6 +30,20 @@ export async function getUserById(userId: string) {
     if (!user) throw new Error("User not found");
 
     return JSON.parse(JSON.stringify(user));
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+
+// GET ALL USERS
+export async function getAllUsers() {
+  try {
+    await connectToDatabase();
+
+    const users = await User.find({});
+
+    return JSON.parse(JSON.stringify(users));
   } catch (error) {
     handleError(error);
   }
