@@ -1,10 +1,10 @@
-import NextAuth from "next-auth"
+import NextAuth, { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import { env } from "@/lib/env";
 
-const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
@@ -25,17 +25,26 @@ const authOptions = {
         return session;
       }
     },
-    async signIn({ account, profile }: { account: any; profile: any }) {
+    async signIn({ account, profile }) {
       if (account?.provider === 'google') {
         try {
           await connectToDatabase();
-          let user = await User.findOne({ email: profile.email });
+          
+          // Type assertion for Google profile
+          const googleProfile = profile as {
+            email?: string;
+            name?: string;
+            sub?: string;
+            picture?: string;
+          };
+          
+          let user = await User.findOne({ email: googleProfile?.email });
           if (!user) {
             await User.create({
-              email: profile.email,
-              username: profile.name?.replace(" ", "").toLowerCase(),
-              googleId: profile.sub,
-              photo: profile.picture,
+              email: googleProfile?.email,
+              username: googleProfile?.name?.replace(" ", "").toLowerCase(),
+              googleId: googleProfile?.sub,
+              photo: googleProfile?.picture,
             });
           }
           return true;

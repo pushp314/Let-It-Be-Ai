@@ -24,6 +24,18 @@ const Checkout = ({
       buyerId,
     };
     const response = await checkoutCredits(transaction);
+    
+    // Check if response and order exist
+    if (!response || !response.order) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create order. Please try again.',
+        duration: 5000,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     const { order } = response;
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,

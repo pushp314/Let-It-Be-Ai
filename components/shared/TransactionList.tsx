@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -10,7 +9,15 @@ import {
 } from "@/components/ui/table";
 import { ITransaction } from "@/lib/database/models/transaction.model";
 
-const TransactionList = ({ transactions }: { transactions: ITransaction[] }) => {
+// Create an interface for populated transaction
+interface ITransactionPopulated extends Omit<ITransaction, 'buyer'> {
+  buyer: {
+    _id: string;
+    username: string;
+  };
+}
+
+const TransactionList = ({ transactions }: { transactions: ITransactionPopulated[] }) => {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Transactions</h2>
