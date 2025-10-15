@@ -22,8 +22,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-
-// FIX: Define SearchParamProps locally to permanently resolve the "Cannot find name" error.
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+  } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
 
 type SearchParamProps = {
     searchParams: { [key: string]: string | string[] | undefined };
@@ -39,9 +52,6 @@ const Profile = ({ searchParams }: SearchParamProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // FIX: The MONGODB_URI check was incorrect here and caused a client-side crash.
-    // The check should be done on the server, not in a client component.
-
     if (status === "authenticated" && session?.user) {
       const sessionUser = session.user as { id: string };
       const fetchData = async () => {
@@ -95,7 +105,58 @@ const Profile = ({ searchParams }: SearchParamProps) => {
 
   return (
     <>
-      <Header title="Profile" />
+        <div className="flex justify-between items-center">
+            <Header title="Profile" />
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="p-2">
+                    <Image src="/assets/icons/settings.svg" alt="settings" width={24} height={24} />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>User Information</DropdownMenuItem>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                        <DialogTitle>User Information</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col gap-2">
+                            <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
+                            <p><strong>Email:</strong> {user.email}</p>
+                            <p><strong>Username:</strong> {user.username}</p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>Logout</DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-red-500" onSelect={(e) => e.preventDefault()}>Delete Account</DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your account and all your images.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
 
       <section className="profile">
         <div className="profile-balance">
@@ -125,26 +186,6 @@ const Profile = ({ searchParams }: SearchParamProps) => {
             <h2 className="h2-bold text-dark-600">{images?.data.length || 0}</h2>
           </div>
         </div>
-      </section>
-      
-      <section className="mt-8 md:mt-14">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive">Delete Account</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your account and all your images.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </section>
 
       <section className="mt-8 md:mt-14">

@@ -19,9 +19,6 @@ const Credits = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // FIX: The MONGODB_URI check was incorrect here and caused a client-side crash.
-    // The check should be done on the server, not in a client component.
-
     if (status === 'loading') return;
     if (!session) {
       redirect("/sign-in");
@@ -73,7 +70,8 @@ const Credits = () => {
                 <p className="p-20-semibold mt-2 text-purple-500">
                   {plan.name}
                 </p>
-                <p className="h1-semibold text-dark-600">${plan.price}</p>
+                {/* FIX: Changed the currency symbol from $ to ₹ */}
+                <p className="h1-semibold text-dark-600">₹{plan.price}</p>
                 <p className="p-16-regular">{plan.credits} Credits</p>
               </div>
 
