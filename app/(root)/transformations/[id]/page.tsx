@@ -1,4 +1,4 @@
-import { auth } from "next-auth/next";
+import { auth } from "@/auth";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/shared/Header";

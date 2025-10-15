@@ -235,24 +235,36 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
   }
 
   const onTransformHandler = async () => {
-    setIsTransforming(true)
+    setIsTransforming(true);
 
     setTransformationConfig(
       deepMergeObjects(newTransformation, transformationConfig)
-    )
+    );
 
-    setNewTransformation(null)
+    setNewTransformation(null);
 
     startTransition(async () => {
-      await updateCredits(userId, creditFee)
-       toast({
-        title: "Transformation successful!",
-        description: "Your image has been transformed successfully.",
-        duration: 5000,
-        className: "success-toast",
-      });
-    })
-  }
+      try {
+        await updateCredits(userId, creditFee);
+        toast({
+          title: "Transformation successful!",
+          description: "Your image has been transformed successfully.",
+          duration: 5000,
+          className: "success-toast",
+        });
+      } catch (error) {
+        console.error("Error updating credits:", error);
+        toast({
+          title: "Transformation failed!",
+          description: "Something went wrong while applying the transformation. Please try again.",
+          duration: 5000,
+          className: "error-toast",
+        });
+      } finally {
+        setIsTransforming(false);
+      }
+    });
+  };
 
   useEffect(() => {
     if(image && (type === 'restore' || type === 'removeBackground')) {
@@ -365,7 +377,6 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
             type={type}
             title={form.getValues().title}
             isTransforming={isTransforming}
-            setIsTransforming={setIsTransforming}
             transformationConfig={transformationConfig}
           />
         </div>
