@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import { env } from "@/lib/env";
 
-export const authOptions = {
+const authOptions = {
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
