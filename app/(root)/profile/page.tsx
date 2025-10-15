@@ -22,8 +22,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { env } from "@/lib/env";
-
 
 // FIX: Define SearchParamProps locally to permanently resolve the "Cannot find name" error.
 
@@ -41,23 +39,27 @@ const Profile = ({ searchParams }: SearchParamProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!env.MONGODB_URI) {
-      toast({ title: "Error", description: "MONGODB_URI is not configured. Please set it in your environment variables." });
-      redirect("/");
-      return;
-    }
-    // FIX: Use a typed user object to resolve property 'id' does not exist error.
+    // FIX: The MONGODB_URI check was incorrect here and caused a client-side crash.
+    // The check should be done on the server, not in a client component.
+
     if (status === "authenticated" && session?.user) {
-      const sessionUser = session.user as { id: string }; // Cast the user
+      const sessionUser = session.user as { id: string };
       const fetchData = async () => {
         try {
           setLoading(true);
-          const fetchedUser = await getUserById(sessionUser.id); // Use the casted user
+          const fetchedUser = await getUserById(sessionUser.id);
+          if (!fetchedUser) {
+            toast({ title: "Error", description: "Could not fetch user data. The database might be offline.", variant: "destructive" });
+            setError("Failed to fetch user data.");
+            return;
+          }
           const fetchedImages = await getUserImages({ page, userId: fetchedUser._id });
           setUser(fetchedUser);
           setImages(fetchedImages);
         } catch (err) {
-          setError("Failed to fetch data");
+          console.error("API Error:", err);
+          setError("A server error occurred. Please check your database connection.");
+          toast({ title: "Server Error", description: "Could not connect to the server. Please ensure your MONGODB_URL is correct.", variant: "destructive" });
         } finally {
           setLoading(false);
         }
@@ -79,16 +81,16 @@ const Profile = ({ searchParams }: SearchParamProps) => {
     }
   };
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return <div>Loading...</div>;
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return <div className="error-message">{error}</div>;
   }
 
   if (!user) {
-    return <div>User not found</div>;
+    return <div>Redirecting to sign-in...</div>;
   }
 
   return (
@@ -120,7 +122,7 @@ const Profile = ({ searchParams }: SearchParamProps) => {
               height={50}
               className="size-9 md:size-12"
             />
-            <h2 className="h2-bold text-dark-600">{images?.data.length}</h2>
+            <h2 className="h2-bold text-dark-600">{images?.data.length || 0}</h2>
           </div>
         </div>
       </section>

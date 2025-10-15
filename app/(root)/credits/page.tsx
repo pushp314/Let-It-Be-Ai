@@ -3,7 +3,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from 'react';
-import { useToast } from "@/components/ui/use-toast"; // Import useToast
+import { useToast } from "@/components/ui/use-toast";
 
 import Header from "@/components/shared/Header";
 import { Button } from "@/components/ui/button";
@@ -11,26 +11,21 @@ import { plans } from "@/constants";
 import { getUserById } from "@/lib/actions/user.actions";
 import Checkout from "@/components/shared/Checkout";
 import { IUser } from "@/lib/database/models/user.model";
-import { env } from "@/lib/env"; // Import env
 
 const Credits = () => {
   const { data: session, status } = useSession();
   const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast(); // Initialize useToast
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Add the MONGODB_URI check
-    if (!env.MONGODB_URI) {
-      toast({ title: "Error", description: "MONGODB_URI is not configured. Please set it in your environment variables." });
-      redirect("/");
-      return;
-    }
+    // FIX: The MONGODB_URI check was incorrect here and caused a client-side crash.
+    // The check should be done on the server, not in a client component.
 
     if (status === 'loading') return;
     if (!session) {
       redirect("/sign-in");
-      return; // Add return to stop execution
+      return;
     }
 
     const fetchUser = async () => {
@@ -38,19 +33,23 @@ const Credits = () => {
         const sessionUser = session.user as { id: string };
         try {
           const fetchedUser = await getUserById(sessionUser.id);
+          if (!fetchedUser) {
+            toast({ title: "Error", description: "Could not fetch user data. The database might be offline.", variant: "destructive" });
+            return;
+          }
           setUser(fetchedUser);
         } catch (error) {
-            console.error("Failed to fetch user:", error);
-            toast({ title: "Error", description: "Failed to fetch user data. Please try again later.", variant: "destructive" });
+            console.error("API Error:", error);
+            toast({ title: "Server Error", description: "Could not connect to the server. Please ensure your MONGODB_URL is correct.", variant: "destructive" });
         }
       }
       setLoading(false);
     };
 
     fetchUser();
-  }, [session, status, toast]); // Add toast to dependency array
+  }, [session, status, toast]);
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return <div>Loading...</div>;
   }
 
