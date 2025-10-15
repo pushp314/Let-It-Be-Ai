@@ -1,13 +1,13 @@
 "use server";
 
-import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation';
 import Razorpay from "razorpay";
 import { handleError } from '../utils';
 import { connectToDatabase } from '../database/mongoose';
 import Transaction from '../database/models/transaction.model';
 import { updateCredits } from './user.actions';
 
-export async function createRazorpayOrder(transaction: any) {
+export async function checkoutCredits(transaction: any) {
   const instance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
     key_secret: process.env.RAZORPAY_KEY_SECRET!,
@@ -28,7 +28,8 @@ export async function createRazorpayOrder(transaction: any) {
 
   const order = await instance.orders.create(options);
 
-  return JSON.parse(JSON.stringify(order));
+  return { order };
+
 }
 
 export async function createTransaction(transaction: CreateTransactionParams) {

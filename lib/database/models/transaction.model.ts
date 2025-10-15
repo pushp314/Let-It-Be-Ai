@@ -10,6 +10,11 @@ const TransactionSchema = new Schema({
     required: true,
     unique: true,
   },
+  razorpayOrderId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   amount: {
     type: Number,
     required: true,
@@ -26,6 +31,7 @@ const TransactionSchema = new Schema({
   },
 });
 
-const Transaction = models?.Transaction || model("Transaction", TransactionSchema);
+const Transaction =
+  models?.Transaction || model("Transaction", TransactionSchema);
 
 export default Transaction;
