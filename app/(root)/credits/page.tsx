@@ -1,4 +1,5 @@
-import { SignedIn, auth } from "@clerk/nextjs";
+'use client'
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
@@ -9,11 +10,11 @@ import { getUserById } from "@/lib/actions/user.actions";
 import Checkout from "@/components/shared/Checkout";
 
 const Credits = async () => {
-  const { userId } = auth();
+  const { data: session } = useSession();
 
-  if (!userId) redirect("/sign-in");
+  if (!session) redirect("/sign-in");
 
-  const user = await getUserById(userId);
+  const user = await getUserById(session.user.id);
 
   return (
     <>
@@ -60,14 +61,12 @@ const Credits = async () => {
                   Free Consumable
                 </Button>
               ) : (
-                <SignedIn>
-                  <Checkout
-                    plan={plan.name}
-                    amount={plan.price}
-                    credits={plan.credits}
-                    buyerId={user._id}
-                  />
-                </SignedIn>
+                <Checkout
+                  plan={plan.name}
+                  amount={plan.price}
+                  credits={plan.credits}
+                  buyerId={user._id}
+                />
               )}
             </li>
           ))}
